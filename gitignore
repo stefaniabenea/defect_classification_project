@@ -1,0 +1,17 @@
+pycache/
+*.pyc
+*.pyo
+*.pyd
+.env/
+env/
+venv/
+.idea/
+.vscode/
+.DS_Store
+*.egg-info/
+data/
+dist/
+build/
+models/
+plots/
+results.csv
