@@ -2,18 +2,28 @@ import torch
 from PIL import Image
 import os
 from model import CNN
-from utils import get_albumentations_transforms
+from utils import get_albumentations_transforms, get_model
 import numpy as np
 import pandas as pd
 import argparse
 from dataset import prepare_data
 
+parser = argparse.ArgumentParser(description="Script for CNN model inference")
+parser.add_argument("--input", type=str, required=True, help="The path to an image or a folder of images")
+parser.add_argument("--model_name", required=True, type=str, choices= ["CNN", "resnet18"], help="Choose between 'CNN' (custom model) and pretrained 'resnet18' model")
+
+args = parser.parse_args()
+model_name = args.model_name
+input_path = args.input
+
+transforms = get_albumentations_transforms(train=False, model_name=model_name)
+_,_, class_names = prepare_data(data_dir="data", model_name=model_name)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = CNN().to(device)
-a = torch.load("models/cnn_model.pth", map_location=device)
+
+model = get_model(model_name,len(class_names))
+a = torch.load(f"models/{model_name}.pth", map_location=device)
 model.load_state_dict(a)
-transforms = get_albumentations_transforms(train=False)
-_,_, class_names = prepare_data(data_dir="data")
+model = model.to(device)
 
 def predict_image(image_path, model, device, transforms):
     image = Image.open(image_path).convert("RGB")
@@ -38,11 +48,7 @@ def predict_folder(folder_path, model, device, transforms, class_names, csv_path
     print(f"Results saved to csv")
     return results
 
-parser = argparse.ArgumentParser(description="Script for CNN model inference")
-parser.add_argument("--input", type=str, required=True, help="The path to an image or a folder of images")
-args = parser.parse_args()
 
-input_path = args.input
 
 if os.path.isdir(input_path):
     print(f"{input_path} is processed as a folder")

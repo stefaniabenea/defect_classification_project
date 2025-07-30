@@ -4,9 +4,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
-from utils import plot_confusion_matrix
+from utils import plot_confusion_matrix, set_seed, get_model
 import os
-from utils import set_seed
+import argparse
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.makedirs("plots", exist_ok=True)
@@ -14,10 +15,17 @@ os.makedirs("models", exist_ok=True)
 set_seed(42)
 
 
-train_loader, test_loader, class_names = prepare_data(data_dir = "data", batch_size=64)
-model = CNN().to(device)
+
+parser = argparse.ArgumentParser(description="Train script")
+parser.add_argument("--model_name", required=True, type=str, choices= ["CNN", "resnet18"], help="Choose between 'CNN' (custom model) and pretrained 'resnet18' model")
+args = parser.parse_args()
+model_name = args.model_name
+train_loader, test_loader, class_names = prepare_data(data_dir = "data", model_name = model_name, batch_size=64)
+model = get_model(model_name,len(class_names))
+model = model.to(device)
+
 loss_fn = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
+optimizer = optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=1e-3, weight_decay=1e-4)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=3, factor=0.1, verbose=True)
 
 all_train_losses =[]
@@ -98,7 +106,7 @@ for epoch in range(nr_epochs):
         if avg_loss_test<best_loss:
             best_loss=avg_loss_test
             counter = 0
-            torch.save(model.state_dict(),"models/cnn_model.pth")
+            torch.save(model.state_dict(),f"models/{model_name}.pth")
             best_model_state = model.state_dict()
         else:
             counter+=1
@@ -127,10 +135,10 @@ axs[1].set_ylabel("Accuracy")
 axs[1].set_xlabel("Epoch")
 
 plt.tight_layout()
-plt.savefig("plots/loss_accuracy_plot.png")
+plt.savefig(f"plots/{model_name}_loss_accuracy_plot.png")
 plt.show()
 
-plot_confusion_matrix(all_labels_test, all_preds_test, class_names, save_path="plots")
+plot_confusion_matrix(all_labels_test, all_preds_test, class_names, save_path="plots", model_name=model_name)
 
 all_wrong_images = [x[0] for x in misclassified_images]
 all_wrong_labels = [x[1] for x in misclassified_images]

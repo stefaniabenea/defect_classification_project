@@ -9,6 +9,9 @@ from albumentations.pytorch import ToTensorV2
 from torchvision.datasets import ImageFolder
 from PIL import Image
 import numpy as np
+from model import CNN
+import torchvision.models as models
+import torch.nn as nn
 
 def set_seed(seed=42):
     torch.manual_seed(seed)
@@ -32,7 +35,7 @@ def get_transforms(train=False):
         return transform
     
 
-def plot_confusion_matrix(y_true, y_pred, class_names, save_path):
+def plot_confusion_matrix(y_true, y_pred, class_names, save_path, model_name):
     cm = confusion_matrix(y_true, y_pred)
     disp = ConfusionMatrixDisplay(cm, display_labels=class_names)
     fig, ax = plt.subplots(figsize=(8,6))
@@ -40,23 +43,29 @@ def plot_confusion_matrix(y_true, y_pred, class_names, save_path):
     ax.set_title("Confusion matrix on test set")
     plt.tight_layout()
     if save_path:
-        plt.savefig(os.path.join(save_path,"confusion_matrix.png"))
+        plt.savefig(os.path.join(save_path,f"{model_name}_confusion_matrix.png"))
     plt.show()
 
 
-def get_albumentations_transforms(train=False):
+def get_albumentations_transforms(train=False, model_name="CNN"):
+    if model_name == "resnet18":
+        mean = (0.485, 0.456, 0.406)
+        std = (0.229, 0.224, 0.225)
+    else:
+        mean = (0.5, 0.5, 0.5)
+        std = (0.5, 0.5, 0.5)
     if train: 
         transform = A.Compose([
             A.HorizontalFlip(p=0.5),
             A.RandomBrightnessContrast(p=0.2),
             A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=10,p=0.5),
-            A.Normalize(mean=(0.5,0.5,0.5),std=(0.5,0.5,0.5)),
+            A.Normalize(mean=mean,std=std),
             ToTensorV2()
         ])
         return transform
     else:
         transform = A.Compose([
-            A.Normalize(mean=(0.5,0.5,0.5),std=(0.5,0.5,0.5)),
+            A.Normalize(mean=mean,std=std),
             A.ToTensorV2()
         ])
         return transform
@@ -179,6 +188,21 @@ def visualize_activations(model, layer_name, img_path, transform, device ='cpu',
     plt.suptitle(f"Activations of layer '{layer_name}'", fontsize=16)
     plt.tight_layout()
     plt.show()
+
+def get_model(model_name, num_classes):
+    if model_name == "CNN":
+       model = CNN()
+    elif model_name == "resnet18":
+        model = models.resnet18(pretrained = True)
+        in_features = model.fc.in_features
+        model.fc = nn.Linear(in_features, num_classes)
+        for param in model.parameters():
+            param.requires_grad = False
+        for param in model.fc.parameters():
+            param.requires_grad = True
+    else:
+        raise ValueError(f"Unknown model name {model_name}")
+    return model
 
 
     

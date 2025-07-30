@@ -5,10 +5,10 @@ from torch.utils.data import DataLoader
 import os
 
 
-def prepare_data(data_dir, batch_size=32):
+def prepare_data(data_dir, model_name, batch_size=32):
 
-    train_dataset = AlbumentationsImageFolder(root = os.path.join(data_dir,"train/images"), transform=get_albumentations_transforms(train=True))
-    test_dataset = AlbumentationsImageFolder(root = os.path.join(data_dir,"validation/images"),transform=get_albumentations_transforms(train=False))
+    train_dataset = AlbumentationsImageFolder(root = os.path.join(data_dir,"train/images"), transform=get_albumentations_transforms(train=True, model_name=model_name))
+    test_dataset = AlbumentationsImageFolder(root = os.path.join(data_dir,"validation/images"),transform=get_albumentations_transforms(train=False,model_name=model_name))
 
     train_loader = DataLoader(dataset = train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(dataset = test_dataset, batch_size=batch_size, shuffle=False)
