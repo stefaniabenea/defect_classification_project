@@ -31,7 +31,7 @@ pip install -r requirements.txt
 
 ## Dataset Structure
 The dataset folder should be organized as follows:
-
+```plaintext
 data/
 ├── train/
 │   └── images/
@@ -43,7 +43,7 @@ data/
 │       ├── class_1/
 │       ├── class_2/
 │       ├── ...
-
+```
 
 ## Usage
 
@@ -82,6 +82,7 @@ python predict.py --input path/to/image_or_folder --model_name CNN
 ```
 
 ## Project Structure
+```plaintext
 .
 ├── data/                  # Dataset folders
 ├── models/                # Saved models  
@@ -93,4 +94,4 @@ python predict.py --input path/to/image_or_folder --model_name CNN
 ├── predict.py             # Inference script
 ├── requirements.txt       # Python dependencies
 └── README.md              # Project documentation
-
+```
